@@ -59,7 +59,7 @@ Dataset::Dataset(string filename) {
 
 void Dataset::Normalize() {
     int n = x.size();
-    int m = y.size();
+    int m = x[0].size();
     for (int j = 0; j<m; j++){
         double max = x[0][j];
         double min = x[0][j];
