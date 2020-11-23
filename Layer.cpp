@@ -34,7 +34,7 @@ int hard_limit(double x){
 }
 
 double sigmoid(double x){
-    return  1/(1+pow(M_E, x));
+    return  1.0/(1.0+exp(-x));
 }
 
 double sigmoid_prime(double x){
@@ -109,26 +109,19 @@ void Hadamard_Product(vec &v1, vec &v2, vec &res){
     }
 }
 
-/*
- * @param [in] inputSize number of inputs per neuron in layer
- * @param [in] outputSize number of outputs per neuron in layer (number of neurons in next layer)
- * @param [in] n number of neurons in layer
- */
 int Layer::getInputSize() {
     return inputSize;
-}
-
-int Layer::getOutputSize() {
-    return outputSize;
 }
 
 int Layer::get_neuronsCount() {
     return neurons.size();
 }
 
-
-Layer::Layer(int inputSize, int outputSize, int n) {
-    neurons.assign(n, 0); bias.assign(n, 0); acc_error.assign(n, 0);
+Layer::Layer(int inputSize, int n) {
+    /*if (inputSize == -1)
+        n = n-1;*/
+    this->inputSize = inputSize;
+    neurons.assign(n, 0); bias.assign(n, 1); acc_error.assign(n, 0);
     bias_grad.assign(n, 0); z.assign(n, 0); delta.assign(n, 0);
 
     if (inputSize!= -1){
@@ -136,27 +129,21 @@ Layer::Layer(int inputSize, int outputSize, int n) {
         weights_grad.assign(n, vec(inputSize, 0));
     }
 
-
     // assign random values to weights and bias
     for (int i = 0; i<n; i++){
-        bias[i] = rand()/static_cast<double>(RAND_MAX);
+        bias[i] = 1.0 * rand()/(RAND_MAX);
         for (int j = 0; j<inputSize; j++){
-            weights[i][j] = rand()/static_cast<double>(RAND_MAX);
+            weights[i][j] = 1.0* rand()/(RAND_MAX);
         }
     }
+   // if (inputSize != -1)
+        //neurons[n] = 1;
 }
 
 void Layer::Activation() {
     int n = neurons.size();
     for (int i = 0; i<n; i++){
         neurons[i] = sigmoid(z[i]);
-    }
-}
-
-void Layer::Error_Activation() {
-    int n = neurons.size();
-    for (int i = 0; i<n; i++){
-        acc_error[i] = sigmoid_prime(z[i]);
     }
 }
 
@@ -168,19 +155,20 @@ void Layer::Forward_Propagation(Layer *prev) {
 
 // delta_nxLayer = delta_{l+1}
 // neurons_prevLayer = neurons_{l-1}
-void Layer::Backward_Propagation(matrix & nxt_weights, vec & delta_nxLayer, vec & neurons_prevLayer) {
+void Layer::Backward_Propagation(Layer *next) {
     matrix mat;
-    Transpose(nxt_weights, mat);
+    Transpose(next->weights, mat);
 
     vec tmp(mat.size(), 0);
     vec tmp_error(z.size(), 0);
 
-    Matrix_Vector_Mult(mat, delta_nxLayer, tmp);
+    Matrix_Vector_Mult(mat, next->delta, tmp);
     for (int i = 0; i<tmp_error.size(); i++)
-        tmp_error[i] = sigmoid_prime(z[i]);
+        tmp_error[i] = neurons[i]* (1.0 - neurons[i]);
+        //tmp_error[i] = sigmoid_prime(z[i]);
 
     Hadamard_Product(tmp_error, tmp, delta);
-    addWeightsGrad(neurons_prevLayer);
+    //addWeightsGrad(neurons_prevLayer);
 }
 
 void Layer::addWeightsGrad(vec &a_x) {
@@ -202,26 +190,14 @@ void Layer::addWeightsGrad(vec &a_x) {
     }
 }
 
-void Layer::gradient_calculation(Layer *prev) {
+void Layer::updateWB(double learning_rate, Layer *prev) {
     int n = weights.size();
     int m = weights[0].size();
 
     for (int i = 0; i<n; i++){
-        bias_grad[i] = acc_error[i];
-        for (int j = 0; j<m; j++){
-            weights_grad[i][j] = prev->neurons[j] * acc_error[i];
-        }
-    }
-}
-
-void Layer::updateWB(double learning_rate) {
-    int n = weights.size();
-    int m = weights[0].size();
-
-    for (int i = 0; i<n; i++){
-        bias[i] += -learning_rate * bias_grad[i];
+        bias[i] += -learning_rate * delta[i];
         for (int  j = 0; j<m; j++){
-            weights[i][j] += - learning_rate * weights_grad[i][j] ;
+            weights[i][j] += - learning_rate * delta[i] * prev->neurons[j] ;
         }
     }
 }

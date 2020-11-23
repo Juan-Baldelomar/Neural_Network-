@@ -11,7 +11,7 @@ int main() {
     srand(time(NULL));
     Dataset dataset("Input/data.dat");
     dataset.Normalize();
-    NeuralNetwork N(3,16, dataset);
+    NeuralNetwork N(1,2, dataset);
     N.startTrainning(100, 0.5);
     vec x(4, 0);
 
@@ -22,7 +22,5 @@ int main() {
         x[3] = dataset.x[i][3];
         N.predict(x);
     }
-
-
     return 0;
 }

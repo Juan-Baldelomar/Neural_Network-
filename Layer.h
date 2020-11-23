@@ -24,22 +24,24 @@ ostream &operator<<(ostream &os, const vector<double> &V);
 
 class Layer {
 private:
-    int inputSize, outputSize;
+    int inputSize;
     void Activation();
 
 public:
     vec neurons, z, acc_error, bias, bias_grad, delta;
     matrix weights, weights_grad;
-    Layer(int inputSize, int outputSize, int n);
+    Layer(int inputSize, int n);
     int getInputSize();
     int getOutputSize();
     int get_neuronsCount();
     void Forward_Propagation(Layer *prev);
-    void Backward_Propagation(matrix & nxt_weights, vec & delta_nxLayer, vec & neurons_prevLayer);
+    void Backward_Propagation(Layer *next);
     void gradient_calculation(Layer *prev);
     void addWeightsGrad(vec &a_x);
-    void updateWB(double learning_rate);
+    void updateWB(double learning_rate, Layer* prev);
     void Error_Activation();
+
+    double getLayerWeightsPound(int j, Layer *next);
 };
 
 

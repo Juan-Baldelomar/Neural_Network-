@@ -11,8 +11,6 @@
 typedef vector<double> vec;
 
 class NeuralNetwork {
-    Layer *Input;
-    Layer *Output;
     vector<Layer*>layers;
     vector<vec>x, y_feat, Mx, My_feat;
     vec y, My;
@@ -29,6 +27,7 @@ public:
     void showNeurons(int e);
     void showGradient(int e);
     void cleanDeltas();
+    void feedInput(vec &input);
 
     int getInputSize();
 };
