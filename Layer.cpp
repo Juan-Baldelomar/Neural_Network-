@@ -7,7 +7,12 @@
 #include "cstdlib"
 #include <bits/stdc++.h>
 
+// utilities
+double sigmoid(double x){
+    return  1.0/(1.0+exp(-x));
+}
 
+/* ----------------------------------------------------------------- SOBRECARGA OPERADORES ----------------------------------------------------------------------- */
 ostream &operator<<(ostream &os, const vector< vector<double> > &M)
 {
     for(int i = 0; i < M.size(); i++)
@@ -28,105 +33,64 @@ ostream &operator<<(ostream &os, const vector<double> &V)
     return os;
 }
 
-
-int hard_limit(double x){
-    return x<0? 0 : 1;
-}
-
-double sigmoid(double x){
-    return  1.0/(1.0+exp(-x));
-}
-
-double sigmoid_prime(double x){
-    return sigmoid(x)*(1-sigmoid(x));
-}
-
-void Resta_Vector(vec &v1, vec &v2, vec &res){
+vector<double> operator+(vec&v1, vec&v2){
     int n = v1.size();
+    vec v;
     for (int i = 0; i<n; i++){
-        res[i] = v1[i] - v2[i];
-    }
-}
-
-/*
-vector<double> operator-(vec&v1, vec&v2){
-    int n = v1.size();
-    vector<double> *v = new vector<double>(n, 0);
-    for (int i = 0; i<n; i++){
-        (*v)[i] = v1[i] - v2[i];
+        v.push_back(v1[i] + v2[i]);
     }
     return v;
 }
-*/
 
-void Suma_Vector(vec &v1, vec &v2, vec &res){
-    int n = v1.size();
-    for (int i = 0; i<n; i++){
-        res[i] = v2[i] + v1[i];
-    }
-}
-
-void Transpose(matrix &mat, matrix &res){
+vec operator*(matrix &mat, vec &v){
     int n = mat.size();
     int m = mat[0].size();
-    res.assign(m, vector<double>(n, 0));
-
-    for (int i = 0; i<n; i++)
-        for (int j = 0; j<m; j++)
-            res[j][i] = mat[i][j];
-}
-
-void Matrix_Vector_Mult(matrix &mat, vec &v, vec &res){
-    int n = mat.size();
-    int m = mat[0].size();
+    vec res;
     for (int i = 0; i<n; i++){
         double acc = 0;
         for (int j = 0; j<m; j++){
             acc+= mat[i][j]*v[j];
         }
-        res[i] = acc;
+        res.push_back(acc);
     }
+    return res;
 }
 
-void CleanMatrix(matrix &A){
-    int n = A.size();
-    int m = A[0].size();
+vec operator*(vec &v1, vec &v2){
+    int n = v1.size();
+    vec res;
+    for (int i = 0; i<n; i++){
+        res.push_back(v1[i]*v2[i]);
+    }
+    return res;
+}
+
+matrix operator!(matrix &mat){
+    int n = mat.size();
+    int m = mat[0].size();
+    matrix res(m, vector<double>(n, 0));
     for (int i = 0; i<n; i++)
         for (int j = 0; j<m; j++)
-            A[i][j] = 0;
-}
+            res[j][i] = mat[i][j];
 
-void CleanVector(vec &v){
-    int n = v.size();
-    for (int i =0; i<n; i++)
-        v[i] = 0;
-}
-
-void Hadamard_Product(vec &v1, vec &v2, vec &res){
-    int n = v1.size();
-    for (int i = 0; i<n; i++){
-        res[i] = v1[i]*v2[i];
-    }
+    return res;
 }
 
 int Layer::getInputSize() {
     return inputSize;
 }
 
-int Layer::get_neuronsCount() {
-    return neurons.size();
-}
+/*---------------------------------------- CONSTRUCTOR -----------------------------------------------*/
 
 Layer::Layer(int inputSize, int n) {
-    /*if (inputSize == -1)
-        n = n-1;*/
     this->inputSize = inputSize;
-    neurons.assign(n, 0); bias.assign(n, 1); acc_error.assign(n, 0);
-    bias_grad.assign(n, 0); z.assign(n, 0); delta.assign(n, 0);
+    neurons.assign(n, 0);
+    bias.assign(n, 1);
+    z.assign(n, 0);
+    delta.assign(n, 0);
 
     if (inputSize!= -1){
         weights.assign(n, vec(inputSize, 0));
-        weights_grad.assign(n, vec(inputSize, 0));
     }
 
     // assign random values to weights and bias
@@ -136,9 +100,9 @@ Layer::Layer(int inputSize, int n) {
             weights[i][j] = 1.0* rand()/(RAND_MAX);
         }
     }
-   // if (inputSize != -1)
-        //neurons[n] = 1;
 }
+
+/* ---------------------------------------------------------------- TRAINNING -----------------------------------------------------------------------*/
 
 void Layer::Activation() {
     int n = neurons.size();
@@ -148,46 +112,19 @@ void Layer::Activation() {
 }
 
 void Layer::Forward_Propagation(Layer *prev) {
-    Matrix_Vector_Mult(weights, prev->neurons, z);
-    Suma_Vector(z, bias, z);
+    z = weights * prev->neurons;
+    z = bias + z;
     Activation();
 }
 
-// delta_nxLayer = delta_{l+1}
-// neurons_prevLayer = neurons_{l-1}
 void Layer::Backward_Propagation(Layer *next) {
-    matrix mat;
-    Transpose(next->weights, mat);
+    vec sigm_prime;
+    matrix mat = !next->weights;                            // transpose weights
+    vec tmp = mat * next->delta;                            // matrix * vec
+    for (int i = 0; i < neurons.size(); i++)
+        sigm_prime.push_back(neurons[i] * (1.0 - neurons[i]));
 
-    vec tmp(mat.size(), 0);
-    vec tmp_error(z.size(), 0);
-
-    Matrix_Vector_Mult(mat, next->delta, tmp);
-    for (int i = 0; i<tmp_error.size(); i++)
-        tmp_error[i] = neurons[i]* (1.0 - neurons[i]);
-        //tmp_error[i] = sigmoid_prime(z[i]);
-
-    Hadamard_Product(tmp_error, tmp, delta);
-    //addWeightsGrad(neurons_prevLayer);
-}
-
-void Layer::addWeightsGrad(vec &a_x) {
-    int n = delta.size();
-    int m = a_x.size();
-    matrix mat(n, vec(m, 0));
-
-    // vectors mult
-    for (int i = 0; i<n; i++){
-        for (int j = 0; j<m; j++){
-            mat[i][j] = delta[i]*a_x[j];
-        }
-    }
-    for (int i = 0; i<n; i++){
-        bias_grad[i] += delta[i];
-        for (int j = 0; j<m; j++){
-            weights_grad[i][j] += mat[i][j];
-        }
-    }
+    delta = sigm_prime * tmp;                               //hardamar product
 }
 
 void Layer::updateWB(double learning_rate, Layer *prev) {
