@@ -5,6 +5,7 @@
 #include "Neuron.h"
 #include "math.h"
 
+/*
 int hard_limit(double x){
     return x<0? 0 : 1;
 }
@@ -37,4 +38,5 @@ void Neuron::activation() {
     }
 }
 
+*/
 

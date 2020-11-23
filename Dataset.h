@@ -8,12 +8,15 @@
 #include "vector"
 using  namespace std;
 
+int getRandom(int base, int limit);
+
 class Dataset {
 public:
     vector<vector<double>>x;
     vector<double>y;
 public:
     Dataset(string name);
+    void Normalize();
 };
 
 
