@@ -38,7 +38,7 @@ Dataset::Dataset(string filename) {
     y.assign(n, 0);
 
     set<int> elements;
-    int  i = 0;
+    unsigned int  i = 0;
 
     //shuffle data
     while (i != y.size()){
@@ -63,7 +63,7 @@ void Dataset::Normalize() {
     for (int j = 0; j<m; j++){
         double max = x[0][j];
         double min = x[0][j];
-        for (int i = 0; i<n; i++){
+        for ( int i = 0; i<n; i++){
             if (max < x[i][j])
                 max = x[i][j];
             if (min > x[i][j])

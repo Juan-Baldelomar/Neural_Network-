@@ -4,7 +4,6 @@
 
 #ifndef NEURAL_NETWORK_LAYER_H
 #define NEURAL_NETWORK_LAYER_H
-#include "Neuron.h"
 #include "vector"
 #include "iostream"
 using namespace std;
@@ -25,6 +24,7 @@ public:
     vec neurons, z, bias, delta;
     matrix weights;
     Layer(int inputSize, int n);
+    ~Layer();
     int getInputSize();
     void Forward_Propagation(Layer *prev);
     void Backward_Propagation(Layer *next);

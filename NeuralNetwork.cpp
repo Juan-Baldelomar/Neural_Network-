@@ -8,6 +8,12 @@
 
 using namespace std;
 
+NeuralNetwork::~NeuralNetwork() {
+    for (unsigned int i = 0; i<layers.size(); i++){
+        delete (layers[i]);
+    }
+}
+
 /*
  * @param [in] n_layers number of intermediate layers
  * @param [in] n_neurons number of neurons in intermediate layers
@@ -46,16 +52,16 @@ NeuralNetwork::NeuralNetwork(int n_layers, int n_neurons, Dataset &dataset) {
 }
 
 
-void NeuralNetwork::startTrainning(int epochs, double learning_rate) {
+void NeuralNetwork::startTrainning(int epochs, double learning_rate, double tol) {
     if (learning_rate < 0 || learning_rate > 1) {
         cout << "learning rate parameter out of bounds" << endl;                //verify learning rate is within bounds
         return;
     }
 
-    int e = 0;
+    int e = 1;
     double error;
     while (true) {
-        for (int i = 0; i < x.size(); i++) {
+        for (unsigned int i = 0; i < x.size(); i++) {
             Forward_Propagation(x[i]);
             Backward_Propagation(learning_rate, y[i]);
         }
@@ -63,34 +69,39 @@ void NeuralNetwork::startTrainning(int epochs, double learning_rate) {
         // verify error in prediction
         error = getError();
         cout << "error: " << error << endl;
-        if (error < 0.01 || e++ > epochs)
+        if (error < tol || ++e >= epochs)
             break;                                                              //stop criteria
     }
 
     //statistics
+
     cout << " --------------------------------------------- STATISTICS ------------------------------------------------ " <<endl;
+    if (error >= tol)
+        cout << "  WARNING : NO CONVERGENCIA  !! " << endl;
+    cout << "TOLERANCIA: " << tol << endl;
+    cout << "HIDDEN LAYERS: " << layers.size() - 2 << endl;
+    cout << "Neuronas: " << layers[1]->neurons.size() << endl;
     cout << "EPOCAS: " << e << endl;
     cout << "ERROR: " << error << endl;
 }
 
 // feed input to input layer
 void NeuralNetwork::feedInput(vec &input) {
-    int n = layers[0]->neurons.size();
+    unsigned int n = layers[0]->neurons.size();
     if (input.size() != n) {
         cout << "ERROR: sizes dont match in Input" << endl;
         return;
     }
-    for (int i = 0; i < n; i++) {
+    for (unsigned int i = 0; i < n; i++) {
         layers[0]->neurons[i] = input[i];
     }
 }
 
 void NeuralNetwork::Forward_Propagation(vec &input) {
-    int n = layers.size();
     feedInput(input);
 
     // forward propagation in middle and output layers
-    for (int l = 1; l < layers.size(); l++) {
+    for (unsigned int l = 1; l < layers.size(); l++) {
         layers[l]->Forward_Propagation(layers[l - 1]);
     }
 }
@@ -100,17 +111,17 @@ void NeuralNetwork::Backward_Propagation(double learning_rate, vec &expected) {
     Layer *last = layers[n - 1];
 
     // get error in output layer (init of Backward)
-    for (int i = 0; i < layers[n - 1]->neurons.size(); i++) {
+    for (unsigned int i = 0; i < layers[n - 1]->neurons.size(); i++) {
         last->delta[i] = (last->neurons[i] - expected[i]) * (last->neurons[i]) * (1.0 - last->neurons[i]);
     }
 
     // Backward Propagation in middle layers
-    for (int i = n - 2; i > 0; i--) {
+    for (unsigned int i = n - 2; i > 0; i--) {
         layers[i]->Backward_Propagation(layers[i + 1]);         // middle layers
     }
 
     // update weights and bias
-    for (int i = n - 1; i > 0; i--) {
+    for (unsigned int i = n - 1; i > 0; i--) {
         layers[i]->updateWB(learning_rate, layers[i - 1]);
     }
 }
@@ -152,7 +163,7 @@ void NeuralNetwork::debug(int e) {
             << "--------------------------------------------------------- SHOW WEIGHTS --------------------------------------------------------- "
             << endl;
     int n = layers.size();
-    for (int l = 0; l < n; l++) {
+    for ( int l = 0; l < n; l++) {
         cout << "EPOCH : " << e << " LAYER: " << l << endl;
         cout << layers[l]->weights << endl;
         cout << layers[l]->bias << endl;
@@ -175,7 +186,7 @@ void NeuralNetwork::showNeurons(int e) {
             << "--------------------------------------------------------- SHOW NEURONS --------------------------------------------------------- "
             << endl;
     int n = layers.size();
-    for (int l = 0; l < n; l++) {
+    for ( int l = 0; l < n; l++) {
         cout << "EPOCH " << e << " NEURONS LAYER : " << l << endl;
         cout << layers[l]->neurons << endl;
     }

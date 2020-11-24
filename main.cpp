@@ -8,20 +8,34 @@
 using namespace std::chrono;
 
 
-int main() {
+int main(int n_args, char** args) {
     srand(time(NULL)); //seed rand
 
+    int n_layers = 0;
+    int n_neurons = 0;
+    double tol = 0.1;
+
+    n_layers = atoi(args[2]);
+    n_neurons = atoi(args[3]);
+    if (n_args > 4)
+        tol = atof(args[4]);
+
+    if (n_layers <= 0 || n_neurons <= 0 || tol <= 0.0 ||n_args < 4){
+        std::cout << "Parametros incorrectos " << endl;
+        return 1;
+    }
+
     // read Dataset
-    Dataset dataset("Input/data.dat");
+    Dataset dataset(args[1]);
     dataset.Normalize();
 
     // build neural network
-    NeuralNetwork N(1,3, dataset);
+    NeuralNetwork N(n_layers,n_neurons, dataset);
 
     //clock start
     high_resolution_clock::time_point start = high_resolution_clock::now();
 
-    N.startTrainning(500, 0.5);
+    N.startTrainning(100, 0.5, tol);
 
     //calculo de tiempo
     high_resolution_clock::time_point end = high_resolution_clock::now();
@@ -29,13 +43,6 @@ int main() {
     cout << "TIEMPO DE ENTRENAMIENTO: " ;
     cout << timeElapsed.count() << " seconds " << endl;
 
-    /*vec x(4, 0);
-    for (int i = 0; i<dataset.x.size(); i++){
-        x[0] = dataset.x[i][0];
-        x[1] = dataset.x[i][1];
-        x[2] = dataset.x[i][2];
-        x[3] = dataset.x[i][3];
-        N.predict(x);
-    }*/
+    //N.~NeuralNetwork();
     return 0;
 }

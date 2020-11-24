@@ -16,7 +16,8 @@ class NeuralNetwork {
 
 public:
     NeuralNetwork(int n_layers, int n_neurons, Dataset &dataset);
-    void startTrainning(int epochs, double learning_rate);
+    ~NeuralNetwork();
+    void startTrainning(int epochs, double learning_rate, double  tol);
     void Forward_Propagation(vec &input);
     void Backward_Propagation(double learning_rate, vec &expected);
     double predict(vec &x);

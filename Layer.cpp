@@ -15,7 +15,7 @@ double sigmoid(double x){
 /* ----------------------------------------------------------------- SOBRECARGA OPERADORES ----------------------------------------------------------------------- */
 ostream &operator<<(ostream &os, const vector< vector<double> > &M)
 {
-    for(int i = 0; i < M.size(); i++)
+    for(unsigned int i = 0; i < M.size(); i++)
     {
         for(auto x:M[i])
         {
@@ -94,12 +94,15 @@ Layer::Layer(int inputSize, int n) {
     }
 
     // assign random values to weights and bias
-    for (int i = 0; i<n; i++){
+    for ( int i = 0; i<n; i++){
         bias[i] = 1.0 * rand()/(RAND_MAX);
         for (int j = 0; j<inputSize; j++){
             weights[i][j] = 1.0* rand()/(RAND_MAX);
         }
     }
+}
+
+Layer::~Layer() {
 }
 
 /* ---------------------------------------------------------------- TRAINNING -----------------------------------------------------------------------*/
@@ -121,7 +124,7 @@ void Layer::Backward_Propagation(Layer *next) {
     vec sigm_prime;
     matrix mat = !next->weights;                            // transpose weights
     vec tmp = mat * next->delta;                            // matrix * vec
-    for (int i = 0; i < neurons.size(); i++)
+    for (unsigned int i = 0; i < neurons.size(); i++)
         sigm_prime.push_back(neurons[i] * (1.0 - neurons[i]));
 
     delta = sigm_prime * tmp;                               //hardamar product
@@ -131,7 +134,7 @@ void Layer::updateWB(double learning_rate, Layer *prev) {
     int n = weights.size();
     int m = weights[0].size();
 
-    for (int i = 0; i<n; i++){
+    for ( int i = 0; i<n; i++){
         bias[i] += -learning_rate * delta[i];
         for (int  j = 0; j<m; j++){
             weights[i][j] += - learning_rate * delta[i] * prev->neurons[j] ;
